@@ -107,8 +107,6 @@ def simula_sciame(E_iniziale):
 #Simulazioni multiple per ciascuna energia
 risultati = {}
 
-# Dizionario per salvare i valori di X_max per ogni energia iniziale per ogni simulazione (PER ISTOGRAMMA)
-xmax_values = {E: [] for E in E_iniziali}
 media_perdite_totali = []
 dev_perdite_totali = []
 for E in E_iniziali:
@@ -118,10 +116,6 @@ for E in E_iniziali:
 
     for _ in range(num_simulazioni):
         conteggi,perdite,perdite_tot = simula_sciame(E)
-        steps_singolasimulazione = np.arange(len(conteggi)) * passo * X0
-        indice_massimo = np.argmax(np.abs(conteggi))
-        x_massimo = steps_singolasimulazione[indice_massimo]
-        xmax_values[E].append(x_massimo)
         all_conteggi.append(conteggi)
         all_perdite.append(perdite)
         all_perdite_totali.append(perdite_tot)
@@ -231,20 +225,3 @@ plt.grid()
 plt.show()
 
 
-# Istogramma che mi va a rappresentare la distribuzione dei valori di X_max per ciascuna energia
-fig, axes = plt.subplots(2, 2, figsize=(10, 8))  # 2 righe, 2 colonne
-
-for i, (E, ax) in enumerate(zip(E_iniziali, axes.flat)):
-    data = xmax_values[E]
-    ax.hist(data, bins=50, edgecolor='black', alpha=0.7)
-    ax.set_title(f"$E_0 = {E}$ MeV", fontsize=14)
-    ax.set_xlabel("$X_{max}$ (cm)")
-    ax.set_ylabel("Frequenza")
-    mean_X_max = np.mean(data)
-    std_X_max = np.std(data)
-    ax.axvline(mean_X_max, color='r', linestyle='dashed', linewidth=2, label=f'Media: {mean_X_max:.2f} cm')
-    ax.axvline(mean_X_max + std_X_max, color='g', linestyle='dashed', linewidth=2, label=f'+1 std: {mean_X_max + std_X_max:.2f} cm')
-    ax.axvline(mean_X_max - std_X_max, color='g', linestyle='dashed', linewidth=2, label=f'-1 std: {mean_X_max - std_X_max:.2f} cm')
-    ax.legend()  
-plt.tight_layout()
-plt.show(
