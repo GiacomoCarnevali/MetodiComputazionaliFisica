@@ -39,19 +39,18 @@ E_iniziali = [500,1000,2000,4000] #MeV
 num_simulazioni = 1000
 
 def simula_sciame(E_iniziale):
-    
-    soglia_produzione_coppie = 1.02 #MeV
-    
+    soglia_produzione_coppie = 1.02 #MeV (2*m_e*c^2)
     # Inizializzazione delle particelle con l'energia iniziale
     particelle = [{'tipo': 'e', 'energia': E_iniziale}]
     perdita_ionizzazione_totale = 0
     perdita_ionizzazione_step = []
     conteggio_particelle_step = []
-    
+
+
     while particelle:
         nuove_particelle = []
         perdita_ionizzazione = 0
-        
+    
         for particella in particelle:
             energia = particella['energia']
             tipo = particella['tipo']
@@ -59,33 +58,29 @@ def simula_sciame(E_iniziale):
                 E_critica = E_critica_e
             elif tipo == "p":
                 E_critica = E_critica_p
-            
+        
+            # Se la particella è un elettrone o positrone
             if tipo in ['e', 'p']:
-                if energia > perdita_ionizzazione_X0 * passo:
-                    perdita_energia = perdita_ionizzazione_X0 * passo
+                perdita_energia = perdita_ionizzazione_X0 * passo * X0  # Ora è in MeV
+            
+                if energia > perdita_energia:
                     energia -= perdita_energia
                     perdita_ionizzazione += perdita_energia
-                    if energia > E_critica: # Possibilità di emettere un fotone per bremsstrahlung.
+                
+                    # Possibilità di emettere un fotone per bremsstrahlung
+                    if energia > E_critica:
                         if random.random() < (1 - np.exp(-passo)):
-                            if tipo == 'e':
-                                nuove_particelle.append({'tipo': 'fotone', 'energia': energia / 2})
-                                nuove_particelle.append({'tipo': 'e', 'energia': energia / 2})
-                            elif tipo == 'p':
-                                nuove_particelle.append({'tipo': 'fotone', 'energia': energia / 2})
-                                nuove_particelle.append({'tipo': 'p', 'energia': energia / 2})       
+                            nuove_particelle.append({'tipo': 'fotone', 'energia': energia / 2})
+                            nuove_particelle.append({'tipo': tipo, 'energia': energia / 2})       
                         else:
-                             if tipo == 'e':
-                                nuove_particelle.append({'tipo': 'e', 'energia': energia})
-                             elif tipo == 'p':
-                                nuove_particelle.append({'tipo': 'p', 'energia': energia})
+                            nuove_particelle.append({'tipo': tipo, 'energia': energia})  
                     else:
-                         if tipo == 'e':
-                             nuove_particelle.append({'tipo': 'e', 'energia': energia})
-                         elif tipo == 'p':
-                             nuove_particelle.append({'tipo': 'p', 'energia': energia})               
+                        nuove_particelle.append({'tipo': tipo, 'energia': energia})
+                                
                 else:
-                    perdita_ionizzazione += random.uniform(0, energia)
-
+                    perdita_ionizzazione += random.uniform(0, energia)  # Assorbimento per ionizzazione
+        
+            # Se la particella è un fotone
             elif tipo == 'fotone':
                 if energia > soglia_produzione_coppie:
                     if random.random() < (1 - np.exp(-(7/9) * passo)):
@@ -94,13 +89,15 @@ def simula_sciame(E_iniziale):
                     else:
                         nuove_particelle.append({'tipo': 'fotone', 'energia': energia})
                 else:
-                     perdita_ionizzazione += random.uniform(0, energia)
-        
-        # Aggiornamento dei valori
+                    perdita_ionizzazione += random.uniform(0, energia)
+    
+        # Aggiornamento dei valori totali e per step
         perdita_ionizzazione_totale += perdita_ionizzazione
         perdita_ionizzazione_step.append(perdita_ionizzazione)
         conteggio_particelle_step.append(len(nuove_particelle))
+    
         particelle = nuove_particelle
+    
 
     return conteggio_particelle_step, perdita_ionizzazione_step, perdita_ionizzazione_totale
 
@@ -124,7 +121,9 @@ for E in E_iniziali:
     all_conteggi = np.array([np.pad(lst, (0, max_length_conteggi - len(lst))) for lst in all_conteggi])
     all_perdite = np.array([np.pad(lst, (0, max_length_perdite - len(lst))) for lst in all_perdite])
     mean_conteggio = np.mean(all_conteggi, axis=0)
+    mean_conteggio_discreto = np.round(mean_conteggio).astype(int)
     std_conteggio = np.std(all_conteggi, axis=0) #consapevole che i conteggi sono valori "discreti" ma poi per avere un andamento lineare a livello grafico prendo anche risultati con la virgola
+    
     mean_perdita = np.mean(all_perdite, axis=0)
     std_perdita = np.std(all_perdite, axis=0)
     mean_perdite_tot = np.mean(all_perdite_totali)
@@ -133,7 +132,7 @@ for E in E_iniziali:
     dev_perdite_totali.append(std_perdite_tot)
 
     risultati[E] = {
-        "mean_conteggio": mean_conteggio,
+        "mean_conteggio": mean_conteggio_discreto,
         "std_conteggio": std_conteggio,
         "mean_perdita": mean_perdita,
         "std_perdita": std_perdita
