@@ -121,7 +121,6 @@ for E in E_iniziali:
     all_conteggi = np.array([np.pad(lst, (0, max_length_conteggi - len(lst))) for lst in all_conteggi])
     all_perdite = np.array([np.pad(lst, (0, max_length_perdite - len(lst))) for lst in all_perdite])
     mean_conteggio = np.mean(all_conteggi, axis=0)
-    mean_conteggio_discreto = np.round(mean_conteggio).astype(int)
     std_conteggio = np.std(all_conteggi, axis=0) #consapevole che i conteggi sono valori "discreti" ma poi per avere un andamento lineare a livello grafico prendo anche risultati con la virgola
     
     mean_perdita = np.mean(all_perdite, axis=0)
@@ -132,7 +131,7 @@ for E in E_iniziali:
     dev_perdite_totali.append(std_perdite_tot)
 
     risultati[E] = {
-        "mean_conteggio": mean_conteggio_discreto,
+        "mean_conteggio": mean_conteggio,
         "std_conteggio": std_conteggio,
         "mean_perdita": mean_perdita,
         "std_perdita": std_perdita
